@@ -3,17 +3,26 @@ from datacenter.models import Visit
 from django.shortcuts import render
 
 
-def storage_information_view(request):
-    # Программируем здесь
+def format_duration(time_delta):
+        seconds = time_delta.total_seconds()
+        hours = int(seconds // 3600)
+        minutes = int((seconds % 3600) // 60)
+        return f'{hours} часов {minutes} минут'
 
-    non_closed_visits = [
-        {
-            'who_entered': 'Richard Shaw',
-            'entered_at': '11-04-2018 25:34',
-            'duration': '25:03',
-        }
-    ]
+
+def storage_information_view(request):
+    non_closed_visits = []
+    unfinished_visits = Visit.objects.filter(leaved_at=None)
+
+    for visit in unfinished_visits:
+        visit_info = {}
+        visit_info['who_entered'] = visit.passcard.owner_name
+        visit_info['entered_at'] = visit.entered_at
+        visit_duration = visit.get_duration()
+        visit_info['duration'] = format_duration(visit_duration)
+        non_closed_visits.append(visit_info)
+    
     context = {
-        'non_closed_visits': non_closed_visits,  # не закрытые посещения
+        'non_closed_visits': non_closed_visits,
     }
     return render(request, 'storage_information.html', context)
